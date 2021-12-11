@@ -1,0 +1,63 @@
+version: '3.9'
+
+services:
+  # redis-masater
+  redis-master:
+    image: redis:6.0
+    container_name: redis-master
+    restart: always
+    ports:
+      - 6379:6379
+    environment:
+      TZ: "Asia/Shanghai"
+    volumes:
+      # configuration and data folder
+      - ./redis/conf/redis-master.conf:/usr/local/etc/redis/redis.conf
+      - ./redis/data/master/:/data:Z
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    networks:
+      redis-sentinel:
+        ipv4_address: 192.168.3.2
+  # redis slave 1
+  redis-slave-1:
+    image: redis:6.0
+    container_name: redis-slave1
+    restart: always
+    ports:
+      - 6380:6379
+    depends_on:
+      - redis-master
+    environment:
+      TZ: "Asia/Shanghai"
+    volumes:
+      - ./redis/conf/redis-slave1.conf:/usr/local/etc/redis/redis.conf
+      - ./redis/data/slave1/:/data:Z
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    networks:
+      redis-sentinel:
+        ipv4_address: 192.168.3.3
+  # redis slave 2
+  redis-slave-2:
+    image: redis:6.0
+    container_name: redis-slave2
+    restart: always
+    ports:
+      - 6381:6379
+    depends_on:
+      - redis-master
+    environment:
+      TZ: "Asia/Shanghai"
+    volumes:
+      - ./redis/conf/redis-slave2.conf:/usr/local/etc/redis/redis.conf
+      - ./redis/data/slave2/:/data:Z
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    networks:
+      redis-sentinel:
+        ipv4_address: 192.168.3.4
+
+networks:
+  redis-sentinel:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: "192.168.3.0/24"  
